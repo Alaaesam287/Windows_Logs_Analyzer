@@ -1,24 +1,31 @@
-<Window x:Class="WindowsLogsAnalyzer.MainWindow"
+<Window x:Class="Log_Analyzer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         Title="Log Analyzer" Height="600" Width="800">
     <Grid>
+        <!-- Title and Instructions -->
+        <TextBlock Text="Log Analyzer" FontSize="20" FontWeight="Bold" Margin="20,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
+        <!-- DatePickers for selecting time range -->
+        <TextBlock Text="Start Date and Time:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20,50,0,0"/>
+        <DatePicker Name="StartDatePicker" Width="250" Margin="20,75,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
+        <TextBlock Text="End Date and Time:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="300,50,0,0"/>
+        <DatePicker Name="EndDatePicker" Width="250" Margin="300,75,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
         <!-- ComboBox for selecting log type -->
-        <ComboBox Name="LogTypeComboBox" Width="200" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
+        <TextBlock Text="Select Logs Type:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20,125,0,0"/>
+        <ComboBox Name="LogTypeComboBox" Width="250" Margin="20,150,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
             <ComboBoxItem>Application</ComboBoxItem>
             <ComboBoxItem>System</ComboBoxItem>
             <ComboBoxItem>Security</ComboBoxItem>
         </ComboBox>
 
         <!-- Analyze Button -->
-        <Button Name="AnalyzeButton" Content="Analyze" Width="100" Margin="220,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Click="AnalyzeButton_Click"/>
+        <Button Name="AnalyzeButton" Content="Analyze" Width="120" Margin="20,200,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Click="AnalyzeButton_Click"/>
 
-        <!-- DatePickers for selecting time range -->
-        <TextBlock Text="Start Date and Time:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,40,0,0"/>
-        <DatePicker Name="StartDatePicker" Width="200" Margin="10,60,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-
-        <TextBlock Text="End Date and Time:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="220,40,0,0"/>
-        <DatePicker Name="EndDatePicker" Width="200" Margin="220,60,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <!-- Visualize CPU/Memory Usage Button -->
+        <Button Name="VisualizeButton" Content="Visualize CPU/Memory Usage" Width="200" Margin="300,200,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Click="VisualizeButton_Click"/>
     </Grid>
 </Window>
+
