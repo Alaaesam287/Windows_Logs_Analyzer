@@ -1,18 +1,11 @@
-﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using OxyPlot;
-using OxyPlot.Series;
-using OxyPlot.Axes;
-using OxyPlot.WindowsForms;
 using Microsoft.Win32;
 
-namespace WindowsLogsAnalyzer
+
+namespace Log_Analyzer
 {
     public partial class MainWindow : Window
     {
@@ -20,6 +13,8 @@ namespace WindowsLogsAnalyzer
         {
             InitializeComponent();
         }
+
+
 
         // Event handler for Analyze button click
         private void AnalyzeButton_Click(object sender, RoutedEventArgs e)
@@ -62,9 +57,7 @@ namespace WindowsLogsAnalyzer
 
                     MessageBox.Show($"Total logs: {logEntries.Count}\nSuspicious logs: {suspiciousLogs.Count}");
 
-                    var cpuMemoryData = GetCpuMemoryUsage(startDate, endDate);
-
-                    CustomizeAndExportLogs(logEntries, suspiciousLogs, cpuMemoryData, startDate, endDate);
+                    CustomizeAndExportLogs(logEntries, suspiciousLogs, startDate, endDate);
                 }
             }
             catch (Exception ex)
@@ -75,36 +68,25 @@ namespace WindowsLogsAnalyzer
 
         private bool IsSuspiciousLog(EventLogEntry entry)
         {
-            string[] suspiciousKeywords = { "error", "failed", "unauthorized", "critical", "malware", "attack", "denied" };
+            string[] suspiciousKeywords = { "error", "failed", "unauthorized", "critical", "malware", "attack", "denied", "virus", "trojan", "ransomware", "file tampering", "unauthorized file modification",
+                "login failure", "invalid login", "access denied", "security breach", "data breach", "intrusion detected", "unauthorized entry", "zero-day", "advanced persistent threat",
+                "rootkit", "phishing", "spear phishing", "fraudulent email", "data leakage","data exfiltration", "information leak", "brute force", "password attempt",
+                "credential stuffing", "network intrusion", "spoofing", "ddos", "denial of service","backdoor", "exploit", "root privilege", "unauthorized access attempt",
+                "account compromise", "escalated privileges", "insider threat", "malicious insider","compromised account"};
+
             EventLogEntryType[] suspiciousTypes = { EventLogEntryType.Error, EventLogEntryType.FailureAudit };
 
             return suspiciousKeywords.Any(keyword => entry.Message.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
                    suspiciousTypes.Contains(entry.EntryType);
         }
 
-        private List<(DateTime timestamp, double cpuUsage, double memoryUsage)> GetCpuMemoryUsage(DateTime startDate, DateTime endDate)
-        {
-            var data = new List<(DateTime timestamp, double cpuUsage, double memoryUsage)>();
-
-            Random rand = new Random();
-            DateTime currentTime = startDate;
-            while (currentTime <= endDate)
-            {
-                data.Add((currentTime, rand.NextDouble() * 100, rand.NextDouble() * 100));
-                currentTime = currentTime.AddMinutes(1);
-            }
-
-            return data;
-        }
-
         private void CustomizeAndExportLogs(
             List<EventLogEntry> allLogs,
             List<EventLogEntry> suspiciousLogs,
-            List<(DateTime timestamp, double cpuUsage, double memoryUsage)> cpuMemoryData,
             DateTime startDate,
             DateTime endDate)
         {
-            // First SaveFileDialog for logs
+            // SaveFileDialog for logs
             SaveFileDialog logSaveDialog = new SaveFileDialog
             {
                 Title = "Save Exported Logs",
@@ -121,86 +103,11 @@ namespace WindowsLogsAnalyzer
                 {
                     // Export logs to text file
                     ExportLogsToTxt(logFilePath, allLogs, suspiciousLogs, startDate, endDate);
-
-                    // Second SaveFileDialog for PNG
-                    SaveFileDialog pngSaveDialog = new SaveFileDialog
-                    {
-                        Title = "Save CPU/Memory Usage as PNG",
-                        Filter = "PNG Files (*.png)|*.png",
-                        DefaultExt = "png",
-                        FileName = $"CpuMemoryUsage_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.png"
-                    };
-
-                    if (pngSaveDialog.ShowDialog() == true)
-                    {
-                        string pngFilePath = pngSaveDialog.FileName;
-
-                        // Export CPU and Memory usage to PNG
-                        ExportCpuMemoryUsageToPng(pngFilePath, cpuMemoryData, startDate, endDate);
-                    }
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show("Error during export: " + ex.Message);
                 }
-            }
-        }
-
-        private async void ExportCpuMemoryUsageToPng(string filePath, List<(DateTime timestamp, double cpuUsage, double memoryUsage)> cpuMemoryData, DateTime startDate, DateTime endDate)
-        {
-            try
-            {
-                var plotModel = new PlotModel
-                {
-                    Title = "CPU and Memory Usage Over Time",
-                    PlotAreaBackground = OxyColors.White,
-                    TextColor = OxyColors.White,  // Set axis text color to white
-                    TitleColor = OxyColors.White // Set axis title color to white
-                };
-
-                plotModel.Axes.Add(new DateTimeAxis
-                {
-                    Position = AxisPosition.Bottom,
-                    Title = "Time",
-                    StringFormat = "HH:mm",
-                    Minimum = DateTimeAxis.ToDouble(startDate),
-                    Maximum = DateTimeAxis.ToDouble(endDate),
-                    TextColor = OxyColors.White,  // Set axis text color to white
-                    TitleColor = OxyColors.White // Set axis title color to white
-
-                });
-
-                plotModel.Axes.Add(new LinearAxis
-                {
-                    Position = AxisPosition.Left,
-                    Title = "Usage (%)",
-                    Minimum = 0,
-                    Maximum = 100,
-                    TextColor = OxyColors.White,  // Set axis text color to white
-                    TitleColor = OxyColors.White // Set axis title color to white
-
-                });
-
-                var cpuSeries = new LineSeries { Title = "CPU Usage (%)", MarkerType = MarkerType.Circle, Color = OxyColors.Red };
-                var memorySeries = new LineSeries { Title = "Memory Usage (%)", MarkerType = MarkerType.Circle, Color = OxyColors.Green };
-
-                foreach (var data in cpuMemoryData)
-                {
-                    cpuSeries.Points.Add(new DataPoint(DateTimeAxis.ToDouble(data.timestamp), data.cpuUsage));
-                    memorySeries.Points.Add(new DataPoint(DateTimeAxis.ToDouble(data.timestamp), data.memoryUsage));
-                }
-
-                plotModel.Series.Add(cpuSeries);
-                plotModel.Series.Add(memorySeries);
-
-                var exporter = new PngExporter { Width = 2000, Height = 800 };
-
-                await Task.Run(() => exporter.ExportToFile(plotModel, filePath));
-
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error exporting data to PNG: " + ex.Message);
             }
         }
 
@@ -223,6 +130,78 @@ namespace WindowsLogsAnalyzer
                 writer.WriteLine($"Event Type: {entry.EntryType}");
                 writer.WriteLine(new string('-', 80));
             }
+        }
+
+
+        private async Task<List<(DateTime timestamp, double cpuUsage, double memoryUsage)>> GetCpuMemoryUsageAsync(DateTime startDate, DateTime endDate)
+        {
+            var data = new List<(DateTime timestamp, double cpuUsage, double memoryUsage)>();
+
+            PerformanceCounter cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            PerformanceCounter memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+
+            // Stabilize CPU counter
+            for (int i = 0; i < 3; i++)
+            {
+                _ = cpuCounter.NextValue();
+                await Task.Delay(500); // Asynchronous delay
+            }
+
+            DateTime currentTime = startDate;
+
+            while (currentTime <= endDate)
+            {
+                try
+                {
+                    float cpuUsage = cpuCounter.NextValue();
+                    float availableMemory = memoryCounter.NextValue();
+
+                    // Retrieve total memory dynamically to account for changes
+                    float totalMemory = new Microsoft.VisualBasic.Devices.ComputerInfo().TotalPhysicalMemory / (1024 * 1024); // Convert bytes to MB
+
+                    // Calculate memory usage as a percentage
+                    float memoryUsage = 100 - ((availableMemory / totalMemory) * 100);
+
+                    // Clamp memory usage to 0-100 in case of anomalies
+                    memoryUsage = Math.Max(0, Math.Min(100, memoryUsage));
+
+                    data.Add((currentTime, cpuUsage, memoryUsage));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error collecting data: {ex.Message}");
+                }
+
+                await Task.Delay(1000); // Asynchronous 1-second interval
+                currentTime = currentTime.AddMinutes(5); // Update timestamp for each interval
+            }
+
+            return data;
+        }
+
+        private async void VisualizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Disable the button to prevent multiple clicks
+            VisualizeButton.IsEnabled = false;
+
+            // Collect data asynchronously for the last 1 hour
+            var cpuMemoryData = await GetCpuMemoryUsageAsync(DateTime.Now.AddHours(-1), DateTime.Now);
+
+            // Aggregate data into 1-minute intervals for visualization
+            var aggregatedData = cpuMemoryData
+                .GroupBy(d => new DateTime(d.timestamp.Year, d.timestamp.Month, d.timestamp.Day, d.timestamp.Hour, d.timestamp.Minute, 0)) // Round to the nearest minute
+                .Select(g => (
+                    timestamp: g.Key,
+                    cpuUsage: g.Average(x => x.cpuUsage),
+                    memoryUsage: g.Average(x => x.memoryUsage)
+                )).ToList();
+
+            // Open a visualization window
+            Window1 window1 = new Window1(aggregatedData);
+            window1.Show();
+
+            // Re-enable the button
+            VisualizeButton.IsEnabled = true;
         }
     }
 }
