@@ -24,8 +24,8 @@ namespace Log_Analyzer
                 Minimum = DateTimeAxis.ToDouble(cpuMemoryData[0].timestamp),
                 Maximum = DateTimeAxis.ToDouble(cpuMemoryData[cpuMemoryData.Count - 1].timestamp),
                 MajorGridlineStyle = LineStyle.Solid,
-                TextColor = OxyColors.White,
-                TitleColor = OxyColors.White
+                TextColor = OxyColors.Black,
+                TitleColor = OxyColors.Black
             });
 
             // Configure the primary Y-axis (CPU Usage)
@@ -35,8 +35,8 @@ namespace Log_Analyzer
                 Title = "Usage (%)",
                 Minimum = 0,
                 Maximum = 100,
-                TextColor = OxyColors.White,
-                TitleColor = OxyColors.White
+                TextColor = OxyColors.Black,
+                TitleColor = OxyColors.Black
             });
 
             // Create the CPU usage series
